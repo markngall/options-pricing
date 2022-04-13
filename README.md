@@ -16,7 +16,17 @@ It is sensible to include a check on the requested depth to stop the algorithm r
 
 The fourth stage of the waterfall model is testing. There were several requirements that had to be tested. Firstly, the two algorithms had to produce the same output. Secondly, the numerical solution for European options had to converge to the Black-Scholes solution. Finally, the prices of American options had to be at least as large as those of European options (within machine precision). This is because of their additional time value. To check these conditions, test functions were created. To keep the code organised, all test functions were combined in a 'PricingTest' class. To improve the code’s readability, the Black-Scholes prices are calculated by separate functions, 'BS call()' or 'BS put()'. Another function, 'test copy()', was created to test the copy-constructor and copy-assignment operator.
 
+## Algorithmic Analysis
 Graph showing the time taken to price 100 vanilla options using the forward-recursion and backward-induction
 algorithms:
 
 ![complexity2](https://user-images.githubusercontent.com/69372349/163238330-fee2cbb1-f665-434a-9d7e-3b8b03d530f3.png)
+
+It is clear that the time taken to run both algorithms increases with depth. This is because the option’s value has to be calculated at a greater number of nodes. Backward-induction is fastest. In fact, quadratic trendlines can be fit very closely to both the European and American curves, indicating that the time complexity of backward-induction is O(n^2). This makes sense because the number of calculations needed to move back a time step is equal to the height of the tree. For example, to move from the third time step to the second time step, three calculations are required. Therefore, if there
+are n intervals, n + (n − 1) + ... + 1 = n(n + 1)/2 calculations are needed. The dominant power in this expression is n^2. Note that n+1 exercise values are calculated. This is of a smaller order and thus does not affect the time complexity, which focuses on the algorithm’s asymptotic behaviour. 
+
+Forward-recursion scales poorly with depth for both European and American options – the runtime approximately doubles for each additional time step. It follows that the time complexity is O(2^n), which represents the worst-case scenario for the CRR model. This makes sense because there are two recursive calls at each node. Thus, if the depth is increased by one, twice as many exercise values need to be calculated at the base of the tree. Forward-recursion is effectively using a non-recombinant tree, which grows exponentially with depth. 
+
+Tail recursion is not possible because the outputs from two recursive calls have to be added together in each return statement. Therefore, the function’s stack frame has to be stored and cannot be re-used. The total number of stored stack frames approximately doubles for each additional time interval. Hence, one would expect forward-recursion to have an exponential space complexity. Backward-induction, on the other hand, has lower memory requirements. This is because the length of the dynamically allocated array is invariant with depth – it depends only on the maximum depth. 
+
+The graph above also shows that runtimes are higher for American options. This is because the exercise value needs to be calculated at each node, and thus the number of operations at each inductive step increases. That being said, the layout of the tree is the same as for European options. Therefore, the time complexity remains of order n^2.
